@@ -24,16 +24,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BrowserWebClient extends AudibleClient implements ProgressListener {
 	public final static Log logger = LogFactory.getLog(BrowserWebClient.class);
-	
+
 	final AudibleBrowser browser;
 	final CompletionCallback callback = new CompletionCallback();
 	Object lock = new Object();
-	
+
 	int urlCount = 0;
 	int completeCount = 0;
-	private long start;
-	
-	
+
 	public BrowserWebClient(AudibleBrowser b) {
 		super();
 		SWTAsync.assertGUI();
@@ -41,19 +39,17 @@ public class BrowserWebClient extends AudibleClient implements ProgressListener 
 		browser.browser.addProgressListener(this);
 		allowNetworkAccess = false;
 	}
-	
+
 	@Override
 	public HtmlPage getPage(final String url, IProgressTask task) {
-		
-		
+
 		System.out.println(new Date() + " getPage:" + url);
-		
+
 		callback.setInUse(true);
 		urlCount++;
-		
-		
+
 		try {
-			
+
 			SWTAsync.block(new SWTAsync("setURL") {
 				@Override
 				public void task() {
@@ -65,10 +61,10 @@ public class BrowserWebClient extends AudibleClient implements ProgressListener 
 					}
 				}
 			});
-			
+
 			lastPage = callback.page;
 			return callback.page;
-			
+
 		} finally {
 			synchronized (lock) {
 				this.callback.setInUse(false);
@@ -76,16 +72,17 @@ public class BrowserWebClient extends AudibleClient implements ProgressListener 
 			System.out.println(new Date() + " finally");
 		}
 	}
-	
+
 	private HtmlPage waitForCallback(IProgressTask task) {
 		long start = System.currentTimeMillis();
 		long timeout = start + 60 * 1000;
-		
+
 		System.err.println("waitForCallback start");
-		
+
 		while (!callback.accepted) {
 			Display.getCurrent().readAndDispatch();
-			if (browser.isDisposed()) break;
+			if (browser.isDisposed())
+				break;
 			if (System.currentTimeMillis() > timeout) {
 				logger.error("timeout waiting for web load..." + callback);
 				break;
@@ -98,41 +95,41 @@ public class BrowserWebClient extends AudibleClient implements ProgressListener 
 			logger.error("No page for " + callback);
 			logger.error(callback.progressEvent);
 		}
-		System.err.println("waitForCallback finish time=" + (System.currentTimeMillis() - start) + " ok=" + callback.accepted);
+		System.err.println(
+				"waitForCallback finish time=" + (System.currentTimeMillis() - start) + " ok=" + callback.accepted);
 		return p;
 	}
-	
+
 	/*
-	String get(String w) {
-		if (!w.endsWith(";"))
-			w += ";";
-		
-		return eval("return " + w);
-	}
-	
-	String eval(String w) {
-		try {
-			Object o = browser.browser.evaluate(w);
-			String clz = o != null ? o.getClass().toString() : "";
-			System.out.println("eval(" + w + ") -> " + o + " " + clz);
-			
-			if (o != null) {
-				if (o instanceof String)
-					return (String) o;
-				return o.toString();
-			}
-			
-		} catch (Throwable th) {
-			logger.error("unable to eval " + w, th);
-		}
-		return null;
-	}
-	
-	*/
-	
+	 * String get(String w) {
+	 * if (!w.endsWith(";"))
+	 * w += ";";
+	 *
+	 * return eval("return " + w);
+	 * }
+	 *
+	 * String eval(String w) {
+	 * try {
+	 * Object o = browser.browser.evaluate(w);
+	 * String clz = o != null ? o.getClass().toString() : "";
+	 * System.out.println("eval(" + w + ") -> " + o + " " + clz);
+	 *
+	 * if (o != null) {
+	 * if (o instanceof String)
+	 * return (String) o;
+	 * return o.toString();
+	 * }
+	 *
+	 * } catch (Throwable th) {
+	 * logger.error("unable to eval " + w, th);
+	 * }
+	 * return null;
+	 * }
+	 *
+	 */
+
 	private HtmlPage getHtmlPage() {
 		try {
-			
 			String html = this.browser.browser.getText();
 			final List<NameValuePair> responseHeaders = new ArrayList<>();
 			String u = browser.browser.getUrl();
@@ -153,27 +150,26 @@ public class BrowserWebClient extends AudibleClient implements ProgressListener 
 		}
 		return null;
 	}
-	
+
 	@Override
 	public void changed(ProgressEvent progressEvent) {
-		
+
 		callback.progressEvent = progressEvent;
-		
+
 		boolean busy = progressEvent.current != progressEvent.total;
 		debug("event:" + progressEvent + " busy=" + busy);
-		
-		
+
 	}
-	
+
 	private void debug(String s) {
 		callback.debug += s + ",";
 	}
-	
+
 	@Override
 	public void completed(ProgressEvent progressEvent) {
-		
+
 		synchronized (lock) {
-			
+
 			completeCount++;
 			if (callback.inUse.get()) {
 				callback.page = getHtmlPage();
@@ -182,39 +178,36 @@ public class BrowserWebClient extends AudibleClient implements ProgressListener 
 				lock.notifyAll();
 			} else {
 				System.out.println("callback not in use");
-				
-				
+
 			}
 		}
-		
+
 		System.out.println(callback + " urlCount=" + urlCount + " completeCount=" + completeCount);
 	}
-	
+
 	@Override
 	public void close() {
-		
+
 		callback.reset();
 		if (browser.isDisposed()) {
 			super.close();
 		}
-		
+
 	}
-	
-	
+
 	class CompletionCallback {
-		
+
 		final AtomicBoolean inUse = new AtomicBoolean(false);
 		HtmlPage page = null;
 		volatile boolean accepted = false;
 		String debug = "";
 		ProgressEvent progressEvent;
 		String title;
-		
+
 		public String toString() {
 			return "callback:" + title + " inUse=" + inUse + " debug=" + debug;
 		}
-		
-		
+
 		public void setInUse(boolean b) {
 			if (inUse.get() && b) {
 				assert (false);
@@ -222,28 +215,27 @@ public class BrowserWebClient extends AudibleClient implements ProgressListener 
 			inUse.set(b);
 			if (b)
 				reset();
-			
+
 		}
-		
+
 		public void reset() {
 			accepted = false;
 			page = null;
 			debug = "";
 			progressEvent = null;
 		}
-		
+
 	}
-	
+
 	@Override
 	public void stop() {
 		SWTAsync.block(new SWTAsync() {
 			@Override
 			public void task() {
 				browser.browser.stop();
-				
+
 			}
 		});
 	}
-	
-}
 
+}
