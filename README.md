@@ -1,4 +1,5 @@
 # OpenAudible
+
 A cross-platform desktop application for downloading and managing your Audible audiobooks.
 
 ## Latest Binary Release
@@ -10,6 +11,7 @@ A cross-platform desktop application for downloading and managing your Audible a
 More information is available at the project home page [openaudible.org](http://openaudible.org).
 
 ## Features
+
 - Import audible books from your account
 - Convert to mp3 with all tags
 - Import (or Drag and drop) aax files directly into the app
@@ -19,6 +21,7 @@ More information is available at the project home page [openaudible.org](http://
 And many more features have been added.
 
 ## Important note about the source code
+
 The source code linked in this repo is version 1.1.8, and is out of date. Please use the full binary versions. Many new features have since been added. Give it a try!
 
 We use [![Install4J](https://www.ej-technologies.com/images/product_banners/install4j_small.png)](https://www.ej-technologies.com/products/install4j/overview.html) for our multi-platform installer builder.
